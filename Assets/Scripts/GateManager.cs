@@ -9,6 +9,7 @@ public class GateManager : MonoBehaviour
     public Text gateText;
     public int randomNumber;
     public bool multiply;
+    public bool negative;
     // Start is called before the first frame update
     void Start()
     {

@@ -10,6 +10,7 @@ public class CountManager : MonoBehaviour
     private int countCharacter;
     [SerializeField] private GameObject characterPrefab;
     [Range(0f, 1f)][SerializeField] private float distanceFactor, radius;
+    public List<GameObject> characterList = new List<GameObject>();
 
     // Start is called before the first frame update
     void Start()
@@ -21,7 +22,24 @@ public class CountManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        MakeCharacterList();
+    }
+    void MakeCharacterList()
+    {
+        characterList.Clear();
+        List<GameObject> tempList = new List<GameObject>();
+        tempList = new List<GameObject>(GameObject.FindGameObjectsWithTag("characters"));
+        if (tempList.Count > 0)
+        {
+            foreach(GameObject fooObj in GameObject.FindGameObjectsWithTag("characters")) 
+            {
+                characterList.Add(fooObj);
+            }
+        }
+        else
+        {
+            return;
+        }
     }
     private void FormatCharacters()
     {
@@ -45,10 +63,17 @@ public class CountManager : MonoBehaviour
         countCharacter = transform.childCount - 1;
         FormatCharacters();
     }
-    /// <summary>
-    /// OnTriggerEnter is called when the Collider other enters the trigger.
-    /// </summary>
-    /// <param name="other">The other Collider involved in this collision.</param>
+    private void DestroyCharacter(int number)
+    {
+        for(int i = number; i > 0; i--)
+        {
+            Destroy(characterList[i]);
+            characterList.RemoveAt(i);
+        }
+        countCharacter = transform.childCount - 1;
+        FormatCharacters();
+    }
+
     void OnTriggerEnter(Collider other)
     {
         if(other.gameObject.CompareTag("Gate"))
@@ -57,6 +82,13 @@ public class CountManager : MonoBehaviour
             if(gateManager.multiply)
             {
                 MakeCharacter(countCharacter * gateManager.randomNumber);
+            }
+            else if(gateManager.negative)
+            {
+                if(gateManager.randomNumber < countCharacter)
+                {
+                    DestroyCharacter(countCharacter - gateManager.randomNumber);
+                }
             }
             else
             {
