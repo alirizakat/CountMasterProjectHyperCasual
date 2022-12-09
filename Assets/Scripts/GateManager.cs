@@ -24,7 +24,7 @@ public class GateManager : MonoBehaviour
         }
         else
         {
-            randomNumber = Random.Range(10, 30);
+            randomNumber = Random.Range(1, 11);
             if(randomNumber % 2 != 0)
             {
                 randomNumber+=1;

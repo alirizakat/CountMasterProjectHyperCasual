@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-//This is an average camera follow method, for this project it doesn't need much improvement 
+
 public class CameraFollow : MonoBehaviour
 {
     private Transform target;

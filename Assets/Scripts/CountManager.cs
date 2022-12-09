@@ -7,33 +7,38 @@ using Unity.Mathematics;
 public class CountManager : MonoBehaviour
 {
     public Transform player;
-    private int countCharacter;
+    //public int countCharacter;
     [SerializeField] private GameObject characterPrefab;
     [Range(0f, 1f)][SerializeField] private float distanceFactor, radius;
     public List<GameObject> characterList = new List<GameObject>();
+    ObjectPooler objectPooler;
 
-    // Start is called before the first frame update
     void Start()
     {
+        objectPooler = ObjectPooler.Instance;
         player = transform;
-        countCharacter = transform.childCount - 1; 
+        //countCharacter = transform.childCount - 1;
     }
 
-    // Update is called once per frame
     void Update()
     {
         MakeCharacterList();
     }
+
     void MakeCharacterList()
     {
         characterList.Clear();
-        List<GameObject> tempList = new List<GameObject>();
-        tempList = new List<GameObject>(GameObject.FindGameObjectsWithTag("characters"));
+        List<Transform> tempList = new List<Transform>();
+        tempList.Clear();
+        foreach (Transform child in transform)
+        {
+            tempList.Add(child);
+        }
         if (tempList.Count > 0)
         {
-            foreach(GameObject fooObj in GameObject.FindGameObjectsWithTag("characters")) 
+            foreach (Transform tempObj in tempList)
             {
-                characterList.Add(fooObj);
+                characterList.Add(tempObj.gameObject);
             }
         }
         else
@@ -41,60 +46,62 @@ public class CountManager : MonoBehaviour
             return;
         }
     }
+
     private void FormatCharacters()
     {
-        for(int i = 0; i < player.childCount; i++)
+        for (int i = 0; i < player.childCount; i++)
         {
             var x = distanceFactor * Mathf.Sqrt(i) * Mathf.Cos(i * radius);
             var z = distanceFactor * Mathf.Sqrt(i) * Mathf.Sin(i * radius);
 
-            var newPos = new Vector3 (x,0,z);
+            var newPos = new Vector3(x, 0, z);
             player.transform.GetChild(i).DOLocalMove(newPos, 1f).SetEase(Ease.OutBack);
 
         }
     }
+
     private void MakeCharacter(int number)
     {
-        for(int i = 0; i < number; i++)
+        for (int i = 0; i < number - 1; i++)
         {
-            GameObject temp = Instantiate(characterPrefab, transform.position, Quaternion.identity, transform);
+            GameObject temp = objectPooler.SpawnFromPool("characters", transform.position, Quaternion.identity);
             temp.GetComponent<Animator>().SetBool("run", true);
+            temp.transform.parent = transform;
+            Debug.Log("Number of times");
         }
-        countCharacter = transform.childCount - 1;
         FormatCharacters();
     }
+
     private void DestroyCharacter(int number)
     {
-        for(int i = number; i > 0; i--)
+        for (int i = number; i > 0; i--)
         {
-            Destroy(characterList[i]);
-            characterList.RemoveAt(i);
+            characterList[i].transform.parent = null;
+            characterList[i].gameObject.SetActive(false);
         }
-        countCharacter = transform.childCount - 1;
         FormatCharacters();
     }
 
     void OnTriggerEnter(Collider other)
     {
-        if(other.gameObject.CompareTag("Gate"))
-        {   
+        if (other.gameObject.CompareTag("Gate"))
+        {
             var gateManager = other.GetComponent<GateManager>();
-            if(gateManager.multiply)
+            if (gateManager.multiply)
             {
-                MakeCharacter(countCharacter * gateManager.randomNumber);
+                MakeCharacter(characterList.Count * gateManager.randomNumber);
             }
-            else if(gateManager.negative)
+            else if (gateManager.negative)
             {
-                if(gateManager.randomNumber < countCharacter)
+                if (gateManager.randomNumber < characterList.Count)
                 {
-                    DestroyCharacter(countCharacter - gateManager.randomNumber);
+                    DestroyCharacter(gateManager.randomNumber);
                 }
             }
             else
             {
-                MakeCharacter(countCharacter + gateManager.randomNumber);
+                MakeCharacter(characterList.Count + gateManager.randomNumber);
             }
-
         }
     }
 }
